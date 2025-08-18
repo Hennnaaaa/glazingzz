@@ -1,272 +1,262 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import Layout from '@/components/layout/Layout';
-import ContactForm from '@/components/sections/ContactForm';
-import { HiPhone, HiMail, HiLocationMarker, HiClock, HiCheckCircle } from 'react-icons/hi';
-
-const pageVariants = {
-  initial: { opacity: 0, y: 20 },
-  in: { opacity: 1, y: 0 },
-  out: { opacity: 0, y: -20 }
-};
-
-const pageTransition = {
-  type: 'tween',
-  ease: 'anticipate',
-  duration: 0.5
-};
+import { HiCheckCircle, HiExclamationCircle } from 'react-icons/hi';
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 60 },
+  hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.8,
+      duration: 0.6,
       ease: "easeOut"
     }
   }
 };
 
-const staggerContainer = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
+export default function ContactForm() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null);
+  const [errors, setErrors] = useState({});
 
-export default function Contact() {
-  const contactInfo = [
-    {
-      icon: HiPhone,
-      title: 'Phone',
-      details: ['+44 7949 821925'],
-      subtitle: 'Call us anytime',
-      color: 'text-green-600',
-      bgColor: 'bg-green-100'
-    },
-    {
-      icon: HiMail,
-      title: 'Email',
-      details: ['info@castlecrewglazing.co.uk'],
-      subtitle: 'We reply within 24 hours',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100'
-    },
-    {
-      icon: HiLocationMarker,
-      title: 'Address',
-      details: ['16 Industrial Estate', 'Welwyn Garden, AL7 4ST'],
-      subtitle: 'Visit our location',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100'
-    },
-    {
-      icon: HiClock,
-      title: 'Business Hours',
-      details: ['Mon-Sat: 8:00 AM - 6:00 PM', 'Sun: Closed'],
-      subtitle: 'Flexible scheduling available',
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100'
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: null
+      }));
     }
-  ];
+  };
 
-  const whyChooseUs = [
-    'Free on-site consultation and measurements',
-    'Transparent pricing with no hidden costs',
-    'British made products and materials',
-    'Professional certified installation team',
-    'Comprehensive warranty coverage',
-    'Emergency glazing service available'
-  ];
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.message.trim()) newErrors.message = 'Message is required';
+
+    // Email validation
+    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+
+    try {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'contact',
+          formData: {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone || 'Not provided',
+            subject: formData.subject || 'Contact Form Inquiry',
+            message: formData.message,
+            source: 'Contact Page'
+          }
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        
+        // Reset form
+        setTimeout(() => {
+          setFormData({
+            name: '',
+            email: '',
+            phone: '',
+            subject: '',
+            message: ''
+          });
+          setSubmitStatus(null);
+        }, 3000);
+      } else {
+        console.error('Email sending failed:', result.message);
+        setSubmitStatus('error');
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <Layout 
-      title="Contact Us - Castle Crew Glazing"
-      description="Get in touch with Castle Crew Glazing for your glazing needs. Free quotes, expert consultation, and professional glazing services."
+    <motion.div
+      variants={fadeInUp}
+      initial="hidden"
+      animate="visible"
+      className="bg-white rounded-2xl shadow-xl p-6 md:p-8"
     >
-      <motion.div
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
-      >
-        {/* Hero Section */}
-        <section className="relative pt-32 pb-40 bg-slate-200 overflow-hidden">
-          {/* Desktop Background Image (Original) */}
-          <div className="absolute inset-0 hidden md:block">
-            <div 
-              className="absolute inset-0 bg-cover bg-center bg-slate-800"
-              style={{
-                backgroundImage: `url('/images/hero/hero4.jpg')`
-              }}
+      <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-6">
+        Send Us a Message
+      </h2>
+      
+      {submitStatus && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={`flex items-center space-x-3 p-4 rounded-lg mb-6 ${
+            submitStatus === 'success' 
+              ? 'bg-green-50 border border-green-200 text-green-800'
+              : 'bg-red-50 border border-red-200 text-red-800'
+          }`}
+        >
+          {submitStatus === 'success' ? (
+            <HiCheckCircle className="w-5 h-5 flex-shrink-0" />
+          ) : (
+            <HiExclamationCircle className="w-5 h-5 flex-shrink-0" />
+          )}
+          <p className="text-sm">
+            {submitStatus === 'success' 
+              ? 'Thank you! Your message has been sent. We\'ll get back to you within 24 hours.'
+              : 'Sorry, there was an error sending your message. Please try again or call us directly.'
+            }
+          </p>
+        </motion.div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Full Name *
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 transition-colors ${
+                errors.name ? 'border-red-500' : 'border-slate-300'
+              }`}
+              placeholder="Your full name"
             />
-            <div className="absolute inset-0 bg-slate-800/60"></div>
+            {errors.name && (
+              <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+            )}
           </div>
 
-          {/* Mobile Background Image (New) */}
-          <div className="absolute inset-0 block md:hidden">
-            <img 
-              src="/images/mobile-hero-images/hero7.jpg" 
-              alt="Castle Crew Glazing Contact"
-              className="w-full h-full object-cover"
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Email Address *
+            </label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 transition-colors ${
+                errors.email ? 'border-red-500' : 'border-slate-300'
+              }`}
+              placeholder="your@email.com"
             />
-            <div className="absolute inset-0 bg-slate-800/60"></div>
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
+              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 transition-colors"
+              placeholder="+44 7949 821925"
+            />
           </div>
 
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                Get In <span className="text-slate-300">Touch</span>
-              </h1>
-              <p className="text-xl text-slate-200 max-w-3xl mx-auto leading-relaxed">
-                Ready to transform your space with premium glazing solutions? 
-                Contact Castle Crew Glazing for a free consultation and quote.
-              </p>
-            </motion.div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Subject
+            </label>
+            <input
+              type="text"
+              value={formData.subject}
+              onChange={(e) => handleInputChange('subject', e.target.value)}
+              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 transition-colors"
+              placeholder="What can we help you with?"
+            />
           </div>
-        </section>
+        </div>
 
-        {/* Contact Info Cards */}
-        <section className="py-16 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={staggerContainer}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-            >
-              {contactInfo.map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <motion.div
-                    key={index}
-                    variants={fadeInUp}
-                    className="bg-slate-50 rounded-xl p-6 text-center hover:bg-white hover:shadow-lg transition-all duration-300 border border-slate-100"
-                  >
-                    <div className={`w-12 h-12 ${item.bgColor} rounded-full flex items-center justify-center mx-auto mb-4`}>
-                      <Icon className={`w-6 h-6 ${item.color}`} />
-                    </div>
-                    <h3 className="text-lg font-semibold text-slate-800 mb-2">{item.title}</h3>
-                    <div className="space-y-1 mb-2">
-                      {item.details.map((detail, idx) => (
-                        <p key={idx} className="text-slate-600 text-sm">{detail}</p>
-                      ))}
-                    </div>
-                    <p className={`text-xs font-medium ${item.color}`}>{item.subtitle}</p>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
-          </div>
-        </section>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-2">
+            Message *
+          </label>
+          <textarea
+            value={formData.message}
+            onChange={(e) => handleInputChange('message', e.target.value)}
+            rows={6}
+            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 transition-colors resize-none ${
+              errors.message ? 'border-red-500' : 'border-slate-300'
+            }`}
+            placeholder="Tell us about your project, questions, or how we can help you..."
+          />
+          {errors.message && (
+            <p className="text-red-500 text-sm mt-1">{errors.message}</p>
+          )}
+        </div>
 
-        {/* Main Contact Section */}
-        <section className="py-20 bg-slate-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              
-              {/* Contact Form */}
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <ContactForm />
-              </motion.div>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className={`w-full py-4 px-6 rounded-lg font-semibold transition-all duration-300 ${
+            isSubmitting
+              ? 'bg-slate-400 text-slate-200 cursor-not-allowed'
+              : 'bg-slate-600 text-white hover:bg-slate-700'
+          }`}
+        >
+          {isSubmitting ? (
+            <span className="flex items-center justify-center space-x-2">
+              <div className="w-5 h-5 border-2 border-slate-300 border-t-transparent rounded-full animate-spin"></div>
+              <span>Sending Message...</span>
+            </span>
+          ) : (
+            'Send Message'
+          )}
+        </button>
 
-              {/* Right Side Information */}
-              <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6 }}
-                className="space-y-8"
-              >
-                
-                {/* Why Choose Us */}
-                <div className="bg-white rounded-xl p-8 shadow-lg border border-slate-200">
-                  <h3 className="text-xl font-bold text-slate-800 mb-6">Why Choose Castle Crew Glazing?</h3>
-                  <div className="space-y-3">
-                    {whyChooseUs.map((item, index) => (
-                      <div key={index} className="flex items-start space-x-3">
-                        <HiCheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-slate-600 text-sm">{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Service Areas - REMOVED */}
-
-                {/* Quick Contact */}
-                <div className="bg-slate-600 text-white rounded-xl p-8">
-                  <h3 className="text-xl font-bold mb-4">Need Immediate Help?</h3>
-                  <p className="text-slate-200 mb-6">
-                    For urgent glazing requirements or emergency repairs, 
-                    call us directly for immediate assistance.
-                  </p>
-                  <div className="space-y-3">
-                    <a
-                      href="tel:+447949821925"
-                      className="inline-flex items-center space-x-2 bg-white text-slate-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors w-full justify-center"
-                    >
-                      <HiPhone className="w-5 h-5" />
-                      <span>Call +44 7949 821925</span>
-                    </a>
-                    <p className="text-center text-slate-300 text-sm">
-                      Available Mon-Sat • Emergency service available
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        </section>
-
-        {/* Call to Action Section */}
-        <section className="py-16 bg-gradient-to-r from-slate-600 to-slate-700 text-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeInUp}
-              className="space-y-6"
-            >
-              <h2 className="text-3xl md:text-4xl font-bold">
-                Ready to Start Your Project?
-              </h2>
-              
-              <p className="text-xl text-slate-200">
-                Get your free quote today and discover why Castle Crew Glazing is the preferred choice for premium glazing solutions.
-              </p>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a
-                  href="mailto:info@castlecrewglazing.co.uk"
-                  className="bg-white text-slate-600 px-8 py-4 rounded-lg font-bold hover:bg-gray-100 transition-all duration-300"
-                >
-                  Send Email
-                </a>
-                <span className="text-slate-300 font-medium">or</span>
-                <a
-                  href="tel:+447949821925"
-                  className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold hover:bg-white hover:text-slate-600 transition-all duration-300"
-                >
-                  Call Now
-                </a>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-      </motion.div>
-    </Layout>
+        <p className="text-xs text-slate-500 text-center">
+          We respect your privacy and will never share your information with third parties.
+        </p>
+      </form>
+    </motion.div>
   );
 }

@@ -73,18 +73,25 @@ export default function Home() {
     setStatus({ type: '', message: '' });
 
     try {
-      const response = await fetch('/api/contact', {
+      const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...formData,
-          to: 'info@castlecrewglazing.co.uk',
-          subject: `Free Estimate Request - ${formData.service || 'General Inquiry'}`,
-          source: 'Homepage Form'
+          type: 'contact',
+          formData: {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone || 'Not provided',
+            subject: `Free Estimate Request - ${formData.service || 'General Inquiry'}`,
+            message: `Service Required: ${formData.service}\n\nProject Details:\n${formData.message}\n\nPhone: ${formData.phone || 'Not provided'}`,
+            source: 'Homepage Form'
+          }
         }),
       });
+
+      const result = await response.json();
 
       if (response.ok) {
         setStatus({
@@ -100,7 +107,7 @@ export default function Home() {
           message: ''
         });
       } else {
-        throw new Error('Failed to send message');
+        throw new Error(result.message || 'Failed to send message');
       }
     } catch (error) {
       console.error('Form submission error:', error);
@@ -130,7 +137,6 @@ export default function Home() {
         {/* Services Preview */}
         <Services preview={true} />
         
-
 
         {/* Product Showcase */}
         <section className="py-16 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">

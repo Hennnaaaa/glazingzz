@@ -1,21 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  output: 'export',  // Put this back temporarily
   trailingSlash: true,
   images: {
     unoptimized: true
   },
-  // Remove redirects when using export
-  // async redirects() {
-  //   return [
-  //     {
-  //       source: '/home',
-  //       destination: '/',
-  //       permanent: true,
-  //     },
-  //   ]
-  // },
-  // Add path mapping
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,

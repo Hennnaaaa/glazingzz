@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import Layout from '@/components/layout/Layout';
-import Services from '@/components/sections/Services';
+import Layout from '../src/components/layout/Layout';
+import Services from '../src/components/sections/Services';
 import { getCookie } from './_app';
-import ReviewsSection from '../components/sections/Reviews';
+import ReviewsSection from '../src/components/sections/Reviews';
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },

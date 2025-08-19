@@ -4,12 +4,19 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
-  // Keep webpack alias for components if they stay in src/
-  webpack: (config) => {
+  
+  // Better webpack configuration for mixed structure
+  webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': require('path').resolve(__dirname, 'src'),
+      '@/components': require('path').resolve(__dirname, 'src/components'),
+      '@/styles': require('path').resolve(__dirname, 'src/styles'),
     }
+    
+    // Add src to module resolution
+    config.resolve.modules.push(require('path').resolve(__dirname, 'src'))
+    
     return config
   },
 }

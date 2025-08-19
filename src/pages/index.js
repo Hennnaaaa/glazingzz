@@ -7,10 +7,11 @@ import Reviews from '@/components/sections/Reviews';
 import { HiCheckCircle, HiShieldCheck, HiLightningBolt, HiStar, HiExclamationCircle } from 'react-icons/hi';
 import emailjs from '@emailjs/browser';
 
-
+// Updated EmailJS Configuration for 2-Template System
 const EMAILJS_SERVICE_ID = "service_quqtdya";
-const EMAILJS_TEMPLATE_ID = "template_k5hl0wj"; 
+const EMAILJS_GENERAL_TEMPLATE_ID = "template_general"; // Template 1: General Inquiry (Contact + Quote)
 const EMAILJS_PUBLIC_KEY = "O1coNnj1gvEVdnioN";
+
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
   in: { opacity: 1, y: 0 },
@@ -73,55 +74,58 @@ export default function Home() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setStatus({ type: '', message: '' });
+    e.preventDefault();
+    setIsSubmitting(true);
+    setStatus({ type: '', message: '' });
 
-  try {
-    // Initialize EmailJS
-    emailjs.init(EMAILJS_PUBLIC_KEY);
+    try {
+      // Initialize EmailJS
+      emailjs.init(EMAILJS_PUBLIC_KEY);
 
-    // Prepare email data
-    const emailData = {
-      from_name: formData.name,
-      from_email: formData.email,
-      phone: formData.phone || 'Not provided',
-      subject: `Free Estimate Request - ${formData.service || 'General Inquiry'}`,
-      message: `Service Required: ${formData.service}\n\nProject Details:\n${formData.message}\n\nPhone: ${formData.phone || 'Not provided'}`,
-      to_email: 'info@castlecrewglazing.co.uk'
-    };
+      // Prepare email data for quote request (WITH service field)
+      const emailData = {
+        from_name: formData.name,
+        from_email: formData.email,
+        phone: formData.phone || '',
+        service: formData.service, // This field triggers quote template display
+        message: formData.message || 'No additional details provided',
+        to_email: 'info@castlecrewglazing.co.uk',
+        reply_to: formData.email
+      };
 
-    // Send email
-    const result = await emailjs.send(
-      EMAILJS_SERVICE_ID,
-      EMAILJS_TEMPLATE_ID,
-      emailData
-    );
+      // Send email using general template (will display as quote request because service field exists)
+      const result = await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_GENERAL_TEMPLATE_ID,
+        emailData
+      );
 
-    console.log('Email sent successfully:', result);
-    setStatus({
-      type: 'success',
-      message: 'Thank you! Your estimate request has been sent. We\'ll get back to you within 24 hours.'
-    });
-    
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      service: '',
-      message: ''
-    });
+      console.log('Quote request sent successfully:', result);
+      setStatus({
+        type: 'success',
+        message: 'Thank you! Your quote request has been sent successfully. We\'ll get back to you within 24 hours with a detailed estimate.'
+      });
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        service: '',
+        message: ''
+      });
 
-  } catch (error) {
-    console.error('Form submission error:', error);
-    setStatus({
-      type: 'error',
-      message: 'Sorry, there was an error. Please try again or call us at +44 7949 821925.'
-    });
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    } catch (error) {
+      console.error('Quote form submission error:', error);
+      setStatus({
+        type: 'error',
+        message: 'Sorry, there was an error sending your quote request. Please try again or call us at +44 7949 821925.'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Layout 
       title="Castle Crew Glazing - Transform Your Home | British Made Quality"

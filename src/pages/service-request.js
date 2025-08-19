@@ -1,7 +1,13 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import Layout from '@/components/layout/Layout';
+import emailjs from '@emailjs/browser';
 import { getCookie, setCookie } from './_app';
+
+// Updated EmailJS Configuration for 2-Template System
+const EMAILJS_SERVICE_ID = "service_quqtdya";
+const EMAILJS_SERVICE_TEMPLATE_ID = "template_service"; // Template 2: Service Request
+const EMAILJS_PUBLIC_KEY = "O1coNnj1gvEVdnioN";
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -128,7 +134,6 @@ export default function ServiceRequestPage() {
     e.preventDefault();
     
     if (!validateForm()) {
-      // Scroll to first error
       const firstErrorField = document.querySelector('.border-red-500');
       if (firstErrorField) {
         firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -140,47 +145,92 @@ export default function ServiceRequestPage() {
     setSubmitStatus(null);
 
     try {
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'service-request',
-          formData
-        }),
-      });
+      // Initialize EmailJS
+      emailjs.init(EMAILJS_PUBLIC_KEY);
 
-      const result = await response.json();
+      // Format services list
+      const selectedServices = formData.services.map(serviceId => {
+        const service = services.find(s => s.id === serviceId);
+        return service ? service.name : serviceId;
+      }).join(', ');
 
-      if (response.ok) {
-        // Clear saved draft
-        setCookie('serviceRequestDraft', '', -1);
-        setSubmitStatus('success');
-        
-        // Reset form after success
-        setTimeout(() => {
-          setFormData({
-            firstName: '',
-            lastName: '',
-            email: '',
-            phone: '',
-            address: '',
-            city: '',
-            postcode: '',
-            services: [],
-            urgency: '',
-            description: '',
-            budget: '',
-            preferredContact: 'email'
-          });
-        }, 3000);
-      } else {
-        console.error('Email sending failed:', result.message);
-        setSubmitStatus('error');
-      }
+      // Format urgency
+      const urgencyText = urgencyLevels.find(u => u.id === formData.urgency)?.name || formData.urgency;
+
+      // Format budget
+      const budgetText = formData.budget ? (() => {
+        switch(formData.budget) {
+          case 'under-1000': return 'Under £1,000';
+          case '1000-2500': return '£1,000 - £2,500';
+          case '2500-5000': return '£2,500 - £5,000';
+          case '5000-10000': return '£5,000 - £10,000';
+          case 'over-10000': return 'Over £10,000';
+          default: return formData.budget;
+        }
+      })() : 'Not specified';
+
+      // Format preferred contact
+      const contactMethod = (() => {
+        switch(formData.preferredContact) {
+          case 'email': return 'Email';
+          case 'phone': return 'Phone Call';
+          case 'text': return 'Text Message';
+          case 'any': return 'Any Method';
+          default: return formData.preferredContact;
+        }
+      })();
+
+      // Prepare detailed email data for service request
+      const emailData = {
+        from_name: `${formData.firstName} ${formData.lastName}`,
+        from_email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        postcode: formData.postcode,
+        services: selectedServices,
+        urgency: urgencyText,
+        urgency_level: formData.urgency, // for CSS class in template
+        budget: budgetText,
+        preferred_contact: contactMethod,
+        description: formData.description,
+        to_email: 'info@castlecrewglazing.co.uk',
+        reply_to: formData.email
+      };
+
+      // Send email using service request template
+      const result = await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_SERVICE_TEMPLATE_ID,
+        emailData
+      );
+
+      console.log('Service request sent successfully:', result);
+      setSubmitStatus('success');
+      
+      // Clear saved draft
+      setCookie('serviceRequestDraft', '', -1);
+      
+      // Reset form after success
+      setTimeout(() => {
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          address: '',
+          city: '',
+          postcode: '',
+          services: [],
+          urgency: '',
+          description: '',
+          budget: '',
+          preferredContact: 'email'
+        });
+      }, 3000);
+
     } catch (error) {
-      console.error('Submission error:', error);
+      console.error('Service request submission error:', error);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
@@ -211,7 +261,7 @@ export default function ServiceRequestPage() {
             </motion.div>
             
             <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">
-              Request Submitted Successfully!
+              Service Request Submitted Successfully!
             </h1>
             
             <p className="text-lg text-slate-600 mb-8">
@@ -267,7 +317,7 @@ export default function ServiceRequestPage() {
             
             <h1 className="text-3xl font-bold text-slate-800 mb-4">Something went wrong</h1>
             <p className="text-lg text-slate-600 mb-8">
-              We're sorry, but there was an error submitting your request. Please try again or contact us directly.
+              We're sorry, but there was an error submitting your service request. Please try again or contact us directly.
             </p>
             
             <div className="space-y-4">
@@ -613,7 +663,7 @@ export default function ServiceRequestPage() {
                       </>
                     ) : (
                       <>
-                        <span>Submit Request</span>
+                        <span>Submit Service Request</span>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                         </svg>

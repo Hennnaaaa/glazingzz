@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import emailjs from '@emailjs/browser';
 import { HiCheckCircle, HiExclamationCircle } from 'react-icons/hi';
 
+const EMAILJS_SERVICE_ID = "service_quqtdya";
+const EMAILJS_TEMPLATE_ID = "template_k5hl0wj"; 
+const EMAILJS_PUBLIC_KEY = "O1coNnj1gvEVdnioN";
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
   visible: {
@@ -32,7 +36,6 @@ export default function ContactForm() {
       [field]: value
     }));
     
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -48,7 +51,6 @@ export default function ContactForm() {
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     if (!formData.message.trim()) newErrors.message = 'Message is required';
 
-    // Email validation
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email';
     }
@@ -68,46 +70,43 @@ export default function ContactForm() {
     setSubmitStatus(null);
 
     try {
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'contact',
-          formData: {
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone || 'Not provided',
-            subject: formData.subject || 'Contact Form Inquiry',
-            message: formData.message,
-            source: 'Contact Page'
-          }
-        }),
-      });
+      // Initialize EmailJS
+      emailjs.init(EMAILJS_PUBLIC_KEY);
 
-      const result = await response.json();
+      // Prepare email data
+      const emailData = {
+        from_name: formData.name,
+        from_email: formData.email,
+        phone: formData.phone || 'Not provided',
+        subject: formData.subject || 'Contact Form Inquiry',
+        message: formData.message,
+        to_email: 'info@castlecrewglazing.co.uk'
+      };
 
-      if (response.ok) {
-        setSubmitStatus('success');
-        
-        // Reset form
-        setTimeout(() => {
-          setFormData({
-            name: '',
-            email: '',
-            phone: '',
-            subject: '',
-            message: ''
-          });
-          setSubmitStatus(null);
-        }, 3000);
-      } else {
-        console.error('Email sending failed:', result.message);
-        setSubmitStatus('error');
-      }
+      // Send email
+      const result = await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        emailData
+      );
+
+      console.log('Email sent successfully:', result);
+      setSubmitStatus('success');
+      
+      // Reset form
+      setTimeout(() => {
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: ''
+        });
+        setSubmitStatus(null);
+      }, 3000);
+
     } catch (error) {
-      console.error('Submission error:', error);
+      console.error('Email sending failed:', error);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
@@ -143,7 +142,7 @@ export default function ContactForm() {
           <p className="text-sm">
             {submitStatus === 'success' 
               ? 'Thank you! Your message has been sent. We\'ll get back to you within 24 hours.'
-              : 'Sorry, there was an error sending your message. Please try again or call us directly.'
+              : 'Sorry, there was an error sending your message. Please try again or call us directly at +44 7949 821925.'
             }
           </p>
         </motion.div>

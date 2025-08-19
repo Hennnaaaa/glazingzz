@@ -5,6 +5,12 @@ import Services from '../components/sections/Services';
 import { getCookie } from './_app';
 import ReviewsSection from '../components/sections/Reviews';
 
+import emailjs from '@emailjs/browser';
+
+
+const EMAILJS_SERVICE_ID = "service_quqtdya";
+const EMAILJS_TEMPLATE_ID = "template_k5hl0wj"; 
+const EMAILJS_PUBLIC_KEY = "O1coNnj1gvEVdnioN";
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
   in: { opacity: 1, y: 0 },

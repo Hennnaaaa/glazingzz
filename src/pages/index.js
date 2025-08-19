@@ -5,7 +5,12 @@ import Hero from '@/components/sections/Hero';
 import Services from '@/components/sections/Services';
 import Reviews from '@/components/sections/Reviews';
 import { HiCheckCircle, HiShieldCheck, HiLightningBolt, HiStar, HiExclamationCircle } from 'react-icons/hi';
+import emailjs from '@emailjs/browser';
 
+
+const EMAILJS_SERVICE_ID = "service_quqtdya";
+const EMAILJS_TEMPLATE_ID = "template_k5hl0wj"; 
+const EMAILJS_PUBLIC_KEY = "O1coNnj1gvEVdnioN";
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
   in: { opacity: 1, y: 0 },
@@ -68,58 +73,55 @@ export default function Home() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setStatus({ type: '', message: '' });
+  e.preventDefault();
+  setIsSubmitting(true);
+  setStatus({ type: '', message: '' });
 
-    try {
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'contact',
-          formData: {
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone || 'Not provided',
-            subject: `Free Estimate Request - ${formData.service || 'General Inquiry'}`,
-            message: `Service Required: ${formData.service}\n\nProject Details:\n${formData.message}\n\nPhone: ${formData.phone || 'Not provided'}`,
-            source: 'Homepage Form'
-          }
-        }),
-      });
+  try {
+    // Initialize EmailJS
+    emailjs.init(EMAILJS_PUBLIC_KEY);
 
-      const result = await response.json();
+    // Prepare email data
+    const emailData = {
+      from_name: formData.name,
+      from_email: formData.email,
+      phone: formData.phone || 'Not provided',
+      subject: `Free Estimate Request - ${formData.service || 'General Inquiry'}`,
+      message: `Service Required: ${formData.service}\n\nProject Details:\n${formData.message}\n\nPhone: ${formData.phone || 'Not provided'}`,
+      to_email: 'info@castlecrewglazing.co.uk'
+    };
 
-      if (response.ok) {
-        setStatus({
-          type: 'success',
-          message: 'Thank you! Your estimate request has been sent. We\'ll get back to you within 24 hours.'
-        });
-        
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          service: '',
-          message: ''
-        });
-      } else {
-        throw new Error(result.message || 'Failed to send message');
-      }
-    } catch (error) {
-      console.error('Form submission error:', error);
-      setStatus({
-        type: 'error',
-        message: 'Sorry, there was an error. Please try again or call us at +44 7949 821925.'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    // Send email
+    const result = await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID,
+      emailData
+    );
 
+    console.log('Email sent successfully:', result);
+    setStatus({
+      type: 'success',
+      message: 'Thank you! Your estimate request has been sent. We\'ll get back to you within 24 hours.'
+    });
+    
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      service: '',
+      message: ''
+    });
+
+  } catch (error) {
+    console.error('Form submission error:', error);
+    setStatus({
+      type: 'error',
+      message: 'Sorry, there was an error. Please try again or call us at +44 7949 821925.'
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   return (
     <Layout 
       title="Castle Crew Glazing - Transform Your Home | British Made Quality"

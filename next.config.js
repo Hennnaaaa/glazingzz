@@ -1,15 +1,27 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',  // Put this back temporarily
+  output: 'export',
   trailingSlash: true,
+  
+  // Enable src directory support
+  experimental: {
+    appDir: false,
+  },
+  
   images: {
     unoptimized: true
   },
-  webpack: (config) => {
+  
+  // Better webpack configuration for src/ directory
+  webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': require('path').resolve(__dirname, 'src'),
     }
+    
+    // Add src to resolve modules
+    config.resolve.modules.unshift(require('path').resolve(__dirname, 'src'))
+    
     return config
   },
 }

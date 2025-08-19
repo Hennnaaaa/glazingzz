@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import { HiMenu, HiPhone, HiX } from 'react-icons/hi';
-import { getCookie } from '../../../pages/_app';
+import { getCookie } from '../../pages/_app';
 
 export default function Header({ onMenuClick }) {
   const [scrolled, setScrolled] = useState(false);

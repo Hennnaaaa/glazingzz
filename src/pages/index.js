@@ -9,7 +9,7 @@ import emailjs from '@emailjs/browser';
 
 // Updated EmailJS Configuration for 2-Template System
 const EMAILJS_SERVICE_ID = "service_quqtdya";
-const EMAILJS_GENERAL_TEMPLATE_ID = "template_general"; // Template 1: General Inquiry (Contact + Quote)
+const EMAILJS_TEMPLATE_ID = "template_general"; // Template 1: General Inquiry (Contact + Quote)
 const EMAILJS_PUBLIC_KEY = "O1coNnj1gvEVdnioN";
 
 const pageVariants = {

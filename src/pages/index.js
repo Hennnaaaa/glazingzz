@@ -74,57 +74,59 @@ export default function Home() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setStatus({ type: '', message: '' });
+  e.preventDefault();
+  setIsSubmitting(true);
+  setStatus({ type: '', message: '' });
 
-    try {
-      // Initialize EmailJS
-      emailjs.init(EMAILJS_PUBLIC_KEY);
+  try {
+    // Initialize EmailJS
+    emailjs.init(EMAILJS_PUBLIC_KEY);
 
-      // Prepare email data for quote request (WITH service field)
-      const emailData = {
-        from_name: formData.name,
-        from_email: formData.email,
-        phone: formData.phone || '',
-        service: formData.service, // This field triggers quote template display
-        message: formData.message || 'No additional details provided',
-        to_email: 'info@castlecrewglazing.co.uk',
-        reply_to: formData.email
-      };
+    // Simple email data for quote requests
+    const emailData = {
+      from_name: formData.name,
+      from_email: formData.email,
+      phone: formData.phone || 'Not provided',
+      subject: `Quote Request - ${formData.service}`,
+      service: formData.service, // This will show in the service field
+      message: formData.message || 'Quote request for ' + formData.service,
+      to_email: 'info@castlecrewglazing.co.uk'
+    };
 
-      // Send email using general template (will display as quote request because service field exists)
-      const result = await emailjs.send(
-        EMAILJS_SERVICE_ID,
-        EMAILJS_GENERAL_TEMPLATE_ID,
-        emailData
-      );
+    console.log('Sending quote request with data:', emailData);
 
-      console.log('Quote request sent successfully:', result);
-      setStatus({
-        type: 'success',
-        message: 'Thank you! Your quote request has been sent successfully. We\'ll get back to you within 24 hours with a detailed estimate.'
-      });
-      
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        service: '',
-        message: ''
-      });
+    // Send email using the same simple template
+    const result = await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID, // Use the same template
+      emailData
+    );
 
-    } catch (error) {
-      console.error('Quote form submission error:', error);
-      setStatus({
-        type: 'error',
-        message: 'Sorry, there was an error sending your quote request. Please try again or call us at +44 7949 821925.'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    console.log('Quote request sent successfully:', result);
+    setStatus({
+      type: 'success',
+      message: 'Thank you! Your quote request has been sent successfully. We\'ll get back to you within 24 hours with a detailed estimate.'
+    });
+    
+    // Reset form
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      service: '',
+      message: ''
+    });
+
+  } catch (error) {
+    console.error('Quote form submission error:', error);
+    setStatus({
+      type: 'error',
+      message: 'Sorry, there was an error sending your quote request. Please try again or call us at +44 7949 821925.'
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <Layout 

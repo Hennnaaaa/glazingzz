@@ -3,9 +3,9 @@ import { motion } from 'framer-motion';
 import emailjs from '@emailjs/browser';
 import { HiCheckCircle, HiExclamationCircle } from 'react-icons/hi';
 
-// Updated EmailJS Configuration for 2-Template System
+// Simplified EmailJS Configuration
 const EMAILJS_SERVICE_ID = "service_quqtdya";
-const EMAILJS_GENERAL_TEMPLATE_ID = "template_general"; // Template 1: General Inquiry (Contact + Quote)
+const EMAILJS_TEMPLATE_ID = "template_general"; // Use the simple template
 const EMAILJS_PUBLIC_KEY = "O1coNnj1gvEVdnioN";
 
 const fadeInUp = {
@@ -75,26 +75,27 @@ export default function ContactForm() {
       // Initialize EmailJS
       emailjs.init(EMAILJS_PUBLIC_KEY);
 
-      // Prepare email data for contact form (NO service field)
+      // Simple email data - no conditionals
       const emailData = {
         from_name: formData.name,
         from_email: formData.email,
-        phone: formData.phone || '',
-        subject: formData.subject || 'General Contact Inquiry',
+        phone: formData.phone || 'Not provided',
+        subject: formData.subject || 'Contact Form Inquiry',
+        service: '', // Empty for contact forms
         message: formData.message,
-        to_email: 'info@castlecrewglazing.co.uk',
-        reply_to: formData.email
-        // NO service field - this will trigger contact form display in template
+        to_email: 'info@castlecrewglazing.co.uk'
       };
 
-      // Send email using general template (will display as contact inquiry because no service field)
+      console.log('Sending email with data:', emailData);
+
+      // Send email
       const result = await emailjs.send(
         EMAILJS_SERVICE_ID,
-        EMAILJS_GENERAL_TEMPLATE_ID,
+        EMAILJS_TEMPLATE_ID,
         emailData
       );
 
-      console.log('Contact form email sent successfully:', result);
+      console.log('Email sent successfully:', result);
       setSubmitStatus('success');
       
       // Reset form
@@ -110,7 +111,7 @@ export default function ContactForm() {
       }, 5000);
 
     } catch (error) {
-      console.error('Contact form submission failed:', error);
+      console.error('Email sending failed:', error);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
